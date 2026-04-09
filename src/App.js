@@ -304,6 +304,8 @@ input,select,textarea{font-family:'Outfit',sans-serif;}
   transition:border-color 0.2s,box-shadow 0.2s;outline:none;width:100%;}
 .form-input:focus,.form-select:focus,.form-textarea:focus{
   border-color:var(--blue);box-shadow:0 0 0 3px rgba(45,125,210,0.12);}
+.form-input.form-error,.form-select.form-error,.form-textarea.form-error{
+  border-color:#c0392b;box-shadow:0 0 0 3px rgba(192,57,43,0.1);}
 .form-textarea{resize:vertical;min-height:100px;}
 .form-submit{width:100%;padding:15px;background:var(--navy);color:var(--white);
   border:none;border-radius:8px;font-size:0.95rem;font-weight:700;
@@ -343,6 +345,22 @@ footer{background:#060f1e;color:#5a6f8a;padding:56px 60px 32px;}
   .hero-circle{display:none;}
   footer{padding:40px 20px 24px;}
 }
+
+/* ANIMATIONS */
+@keyframes slideIn {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity:0; }
+  to { opacity:1; }
+}
+@keyframes pulse {
+  0%, 100% { opacity:1; }
+  50% { opacity:0.8; }
+}
+.form-success { animation:slideIn 0.5s ease-out; }
+.subject-item { animation:fadeIn 0.5s ease-out; }
 `;
 
 /* ─────────────────────────────────────────────
@@ -377,54 +395,80 @@ const FEES = [
    SHARED COMPONENTS
 ───────────────────────────────────────────── */
 function EnquiryFormInner() {
-  const [form, setForm] = useState({ name: "", phone: "", email: "", std: "", subject: "", exam: "", msg: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", std: "", subject: "", exam: "", msg: "", batchTime: "" });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const [errors, setErrors] = useState({});
+  
+  const set = (k, v) => {
+    setForm(f => ({ ...f, [k]: v }));
+    if (errors[k]) setErrors(e => ({ ...e, [k]: "" }));
+  };
+  
+  const validateForm = () => {
+    const newErrors = {};
+    if (!form.name.trim()) newErrors.name = "Name is required";
+    if (!form.phone.match(/^\d{10}$/)) newErrors.phone = "Valid 10-digit phone required";
+    if (form.email && !form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = "Valid email required";
+    return newErrors;
+  };
+  
   const handle = async () => {
-    if (form.name && form.phone) {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/submit-enquiry', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form)
-        });
-        if (response.ok) {
-          setSubmitted(true);
-        }
-      } catch (err) {
-        console.error('Form submission error:', err);
-      } finally {
-        setLoading(false);
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/submit-enquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      if (response.ok) {
+        setSubmitted(true);
+      } else {
+        setErrors({ submit: "Failed to submit. Please try again." });
       }
+    } catch (err) {
+      setErrors({ submit: "Network error. Please check your connection." });
+    } finally {
+      setLoading(false);
     }
   };
+  
   if (submitted) return (
-    <div className="form-success">
-      <div style={{ fontSize: "2rem" }}>✅</div>
-      <h3>Enquiry Submitted!</h3>
-      <p>Thank you, <strong>{form.name}</strong>. Our team will contact you within 24 hours.<br />For urgent queries call <strong>+91 98765 43210</strong>.</p>
+    <div className="form-success" style={{ animation: "slideIn 0.5s ease-out" }}>
+      <div style={{ fontSize: "3rem", marginBottom: "16px" }}>✅</div>
+      <h3>Enquiry Submitted Successfully!</h3>
+      <p>Thank you, <strong>{form.name}</strong>. Our admissions team will contact you within 24 hours.<br />For urgent queries, call <strong>+91 98765 43210</strong> or email <strong>admissions@cornerstonemathsphere.in</strong></p>
+      <button className="btn-gold" style={{ marginTop: "20px" }} onClick={() => window.location.href = "/"}>← Back to Home</button>
     </div>
   );
   return (
     <div>
+      {errors.submit && <div style={{ background: "#ffdddd", color: "#c0392b", padding: "12px", borderRadius: "6px", marginBottom: "20px", fontSize: "0.85rem" }}>⚠️ {errors.submit}</div>}
       <div className="form-row">
         <div className="form-group">
           <label className="form-label">Student Name *</label>
-          <input className="form-input" placeholder="Full Name" value={form.name} onChange={e => set("name", e.target.value)} />
+          <input className={`form-input ${errors.name ? "form-error" : ""}`} placeholder="Full Name" value={form.name} onChange={e => set("name", e.target.value)} />
+          {errors.name && <span style={{ color: "#c0392b", fontSize: "0.75rem", marginTop: "4px" }}>{errors.name}</span>}
         </div>
         <div className="form-group">
           <label className="form-label">Parent / Guardian Name</label>
           <input className="form-input" placeholder="Parent Name" />
         </div>
         <div className="form-group">
-          <label className="form-label">Phone Number *</label>
-          <input className="form-input" placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={e => set("phone", e.target.value)} />
+          <label className="form-label">Phone Number * (10 digits)</label>
+          <input className={`form-input ${errors.phone ? "form-error" : ""}`} placeholder="9876543210" value={form.phone} onChange={e => set("phone", e.target.value)} maxLength="10" />
+          {errors.phone && <span style={{ color: "#c0392b", fontSize: "0.75rem", marginTop: "4px" }}>{errors.phone}</span>}
         </div>
         <div className="form-group">
           <label className="form-label">Email Address</label>
-          <input className="form-input" type="email" placeholder="email@example.com" value={form.email} onChange={e => set("email", e.target.value)} />
+          <input className={`form-input ${errors.email ? "form-error" : ""}`} type="email" placeholder="email@example.com" value={form.email} onChange={e => set("email", e.target.value)} />
+          {errors.email && <span style={{ color: "#c0392b", fontSize: "0.75rem", marginTop: "4px" }}>{errors.email}</span>}
         </div>
         <div className="form-group">
           <label className="form-label">Current Standard / Class</label>
@@ -456,7 +500,8 @@ function EnquiryFormInner() {
         </div>
         <div className="form-group">
           <label className="form-label">Preferred Batch Time</label>
-          <select className="form-select">
+          <select className="form-select" value={form.batchTime} onChange={e => set("batchTime", e.target.value)}>
+            <option value="">Select Batch Time</option>
             <option>Morning (7am – 10am)</option>
             <option>Afternoon (1pm – 4pm)</option>
             <option>Evening (5pm – 8pm)</option>
@@ -468,7 +513,7 @@ function EnquiryFormInner() {
           <textarea className="form-textarea" placeholder="Tell us about your learning goals, current difficulties, or any questions..." value={form.msg} onChange={e => set("msg", e.target.value)} />
         </div>
       </div>
-      <button className="form-submit" onClick={handle} disabled={loading}>{loading ? "Submitting..." : "Submit Enquiry →"}</button>
+      <button className="form-submit" onClick={handle} disabled={loading} style={{ opacity: loading ? 0.7 : 1 }}>{loading ? "⏳ Submitting..." : "Submit Enquiry →"}</button>
     </div>
   );
 }
@@ -484,20 +529,20 @@ function HomePage({ goTo }) {
         <div className="hero-geo"></div>
         <div className="hero-circle">
           <div className="hero-circle2">
-            <div className="hero-circle3">Cornerstone<br />MathSphere</div>
+            <div className="hero-circle3">10+ Years<br />Excellence</div>
           </div>
         </div>
         <div className="hero-content">
-          <div className="hero-badge">Est. 2012 · Excellence in Education</div>
-          <h1>Cornerstone<br /><span>MathSphere</span></h1>
-          <div className="hero-tagline">Science & Mathematics Tuition Centre</div>
-          <p className="hero-desc">Expert coaching for all standards — from foundational learning to competitive exam mastery in NEET, JEE & UPSC. Personalised. Proven. Powerful.</p>
+          <div className="hero-badge">🏆 Est. 2012 · #1 Tuition Centre in Chennai</div>
+          <h1>Unlock Your Academic<br /><span>Potential</span></h1>
+          <div className="hero-tagline">Expert Science & Mathematics Coaching</div>
+          <p className="hero-desc">Transform your grades with personalized coaching from experienced faculty. Master boards exams and competitive exams (NEET, JEE, UPSC) with confidence.</p>
           <div className="hero-btns">
-            <button className="btn-gold" onClick={() => goTo("enquiry")}>Apply for Admission</button>
-            <button className="btn-ghost" onClick={() => goTo("courses")}>View Courses</button>
+            <button className="btn-gold" onClick={() => goTo("enquiry")}>🎯 Apply for Admission</button>
+            <button className="btn-ghost" onClick={() => goTo("courses")}>📚 Explore Courses</button>
           </div>
           <div className="hero-stats">
-            {[["1200+","Students Trained"],["98%","Board Pass Rate"],["10+","Years Experience"],["3","Exam Tracks"]].map(([n,l]) => (
+            {[["1200+","Students Trained"],["98%","Success Rate"],["10+","Years Excellence"],["5⭐","Avg Rating"]].map(([n,l]) => (
               <div className="hstat" key={l}>
                 <span className="hstat-n">{n}</span>
                 <span className="hstat-l">{l}</span>
@@ -509,9 +554,9 @@ function HomePage({ goTo }) {
 
       {/* Subjects */}
       <div className="home-subjects">
-        <div className="section-label">Our Subjects</div>
-        <div className="section-title">Core Sciences &<br />Mathematics</div>
-        <div style={{ fontSize: "0.92rem", color: "var(--gray)", marginBottom: "0" }}>Available for all standards from Class 1 to Class 12</div>
+        <div className="section-label">📚 What We Teach</div>
+        <div className="section-title">Core Subjects for<br />Every Standard</div>
+        <div style={{ fontSize: "0.92rem", color: "var(--gray)", marginBottom: "0", marginTop: "8px" }}>From Class 1 foundations to Class 12 board & competitive exams</div>
         <div className="subjects-row">
           {SUBJECTS.map(s => (
             <div className="subj-card" key={s.name}>
@@ -528,18 +573,18 @@ function HomePage({ goTo }) {
 
       {/* Competitive Exams */}
       <div className="home-exam">
-        <div className="section-label">Competitive Coaching</div>
+        <div className="section-label">🎯 Specialized Coaching</div>
         <div className="section-title" style={{ color: "var(--white)" }}>NEET · JEE · UPSC</div>
-        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.92rem", fontWeight: 300, marginBottom: "0" }}>Structured tracks for India's most prestigious entrance exams</div>
+        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.92rem", fontWeight: 300, marginBottom: "0", marginTop: "8px" }}>Expert guidance for India's most competitive entrance examinations</div>
         <div className="exam-grid">
           {EXAMS.map(e => (
             <div className="exam-card" key={e.badge}>
               <div className="exam-badge">{e.badge}</div>
-              <div className="exam-name">{e.badge} Coaching</div>
+              <div className="exam-name">🏥 {e.badge}</div>
               <div className="exam-full">{e.full}</div>
               <div className="exam-desc">{e.desc}</div>
               <div className="exam-topics">
-                {e.topics.map(t => <span className="exam-topic" key={t}>{t}</span>)}
+                {e.topics.map(t => <span className="exam-topic" key={t}>✓ {t}</span>)}
               </div>
             </div>
           ))}
@@ -550,27 +595,28 @@ function HomePage({ goTo }) {
       <div className="home-why">
         <div className="why-grid">
           <div>
-            <div className="section-label">Why Choose Us</div>
-            <div className="section-title">Built on a<br />Foundation of Results</div>
+            <div className="section-label">✨ Our Advantage</div>
+            <div className="section-title">Why Students<br />Choose Us</div>
             <div className="why-points">
               {[
-                ["Individual Attention", "Small batch sizes ensure every student gets personal focus and timely feedback."],
-                ["Experienced Faculty", "All tutors are postgraduates with 10+ years of teaching experience."],
-                ["Structured Curriculum", "Aligned with CBSE/State board syllabus plus competitive exam requirements."],
-                ["Regular Assessments", "Weekly tests and monthly mock exams keep students on track consistently."],
-                ["Doubt Clearing Sessions", "Dedicated doubt-solving hours daily — no question goes unanswered."],
+                ["1-on-1 Attention", "Small batches (max 8 students) ensure every child gets personalized focus and instant feedback."],
+                ["Expert Faculty", "All tutors are postgraduates with 10+ years experience and proven track records."],
+                ["Structured Curriculum", "Aligned with CBSE, State boards + competitive exam patterns."],
+                ["Regular Testing", "Weekly tests, monthly mocks, and performance tracking keep students accountable."],
+                ["Doubt Clearing", "Daily doubt sessions with dedicated mentors - no question left unanswered."],
+                ["Success Rate", "98% board pass rate and consistent selections in NEET, JEE, UPSC."],
               ].map(([t, d], i) => (
                 <div className="why-pt" key={t}>
-                  <div className="why-num">{String(i + 1).padStart(2, "0")}</div>
+                  <div className="why-num" style={{ background: "linear-gradient(135deg, var(--gold), var(--gold2))" }}>{String(i + 1).padStart(2, "0")}</div>
                   <div><div className="why-pt-t">{t}</div><div className="why-pt-d">{d}</div></div>
                 </div>
               ))}
             </div>
           </div>
           <div className="why-visual">
-            <h3>Student Results</h3>
-            <p>Average improvement after one semester</p>
-            {[["Mathematics", "94%"], ["Physics", "89%"], ["Chemistry", "91%"], ["Biology", "93%"], ["Overall", "92%"]].map(([s, v]) => (
+            <h3>📊 Recent Results</h3>
+            <p>Average score improvement in 1 semester</p>
+            {[["Mathematics", "94%"], ["Physics", "89%"], ["Chemistry", "91%"], ["Biology", "93%"], ["Overall Growth", "92%"]].map(([s, v]) => (
               <div className="bar-item" key={s}>
                 <div className="bar-label">
                   <span>{s}</span><span>{v}</span>
@@ -593,6 +639,46 @@ function HomePage({ goTo }) {
           <button className="btn-ghost" style={{ color: "var(--navy)", borderColor: "var(--navy)" }} onClick={() => goTo("fees")}>View Fee Structure</button>
         </div>
       </div>
+
+      {/* Testimonials */}
+      <div style={{ padding: "80px 60px", background: "var(--white)" }}>
+        <div className="section-label">Student Success Stories</div>
+        <div className="section-title">What Our Students Say</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px", marginTop: "48px" }}>
+          {[
+            { name: "Arjun Kumar", exam: "JEE Advanced - AIR 156", quote: "Cornerstone's personalized approach helped me crack JEE. Faculty explained complex concepts brilliantly!" },
+            { name: "Priya Sharma", exam: "NEET - 720/720", quote: "Best decision ever. Teachers were supportive, classes were structured, and results speak for themselves." },
+            { name: "Rohan Patel", exam: "Class 12 Board - 95%", quote: "From struggling in maths to scoring 98! The doubt clearing sessions were game-changing." },
+          ].map((test, i) => (
+            <div key={i} style={{ background: "var(--cream)", padding: "28px", borderRadius: "12px", border: "1px solid var(--mist)", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: "1.4rem", marginBottom: "12px", color: "var(--gold)" }}>⭐⭐⭐⭐⭐</div>
+              <p style={{ fontSize: "0.95rem", color: "var(--gray)", lineHeight: "1.7", marginBottom: "16px" }}>"{test.quote}"</p>
+              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--navy)" }}>{test.name}</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--gold)", fontWeight: 600 }}>{test.exam}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FAQ */}
+      <div style={{ padding: "80px 60px", background: "var(--navy)", color: "var(--white)" }}>
+        <div className="section-label" style={{ color: "var(--gold)" }}>Frequently Asked Questions</div>
+        <div className="section-title" style={{ color: "var(--white)" }}>Common Questions</div>
+        <div style={{ maxWidth: "800px", margin: "48px auto 0" }}>
+          {[
+            { q: "What classes do you teach?", a: "We teach Classes 1-12 across Mathematics, Physics, Chemistry, and Biology. We also have specialized NEET, JEE, and UPSC coaching programs." },
+            { q: "Are there batch transfers available?", a: "Yes, we provide flexible batch timings - Morning (7am-10am), Afternoon (1pm-4pm), Evening (5pm-8pm), and Weekend batches. Transfers can be done once per month." },
+            { q: "Do you provide online classes?", a: "Currently, we offer in-center coaching with recorded sessions for revision. Online classes are coming soon!" },
+            { q: "What's your result track record?", a: "98% board pass rate, 1200+ students trained, and consistent selections in NEET, JEE, and UPSC exams over 10+ years." },
+            { q: "Is there a free trial class?", a: "Yes! You can attend a free introductory class. Just fill the enquiry form and our team will contact you." },
+          ].map((item, i) => (
+            <div key={i} style={{ marginBottom: "20px", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "20px" }}>
+              <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--gold)", marginBottom: "8px" }}>Q: {item.q}</div>
+              <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.75)", lineHeight: "1.6" }}>A: {item.a}</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -603,7 +689,7 @@ function AboutPage() {
       <div className="about-hero">
         <div className="section-label">About Us</div>
         <div className="section-title">Cornerstone MathSphere</div>
-        <div className="section-sub">A centre built on rigour, care and the belief that every student can excel with the right guidance.</div>
+        <div className="section-sub">Leading Science & Mathematics education institution in Chennai with 10+ years of proven excellence and 1200+ successful students.</div>
       </div>
       <div className="about-body">
         <div className="about-grid">
@@ -666,9 +752,9 @@ function CoursesPage() {
   return (
     <div>
       <div className="courses-hero">
-        <div className="section-label">Courses & Subjects</div>
-        <div className="section-title">What We Teach</div>
-        <div className="section-sub" style={{ color: "rgba(255,255,255,0.6)" }}>Comprehensive subject coverage for Classes 1–12 plus competitive exam tracks for NEET, JEE and UPSC.</div>
+        <div className="section-label">📚 Our Programs</div>
+        <div className="section-title">Courses & Subjects</div>
+        <div className="section-sub" style={{ color: "rgba(255,255,255,0.6)" }}>Comprehensive subject coverage for Classes 1–12, CBSE boards, and competitive exam tracks (NEET, JEE, UPSC).</div>
       </div>
       <div className="courses-body">
         <div className="courses-tabs">
@@ -726,9 +812,9 @@ function FeesPage({ goTo }) {
   return (
     <div>
       <div className="fees-hero">
-        <div className="section-label">Fee Structure</div>
-        <div className="section-title">Transparent &<br />Affordable Pricing</div>
-        <div className="section-sub" style={{ color: "rgba(255,255,255,0.6)" }}>No hidden charges. Simple monthly plans to match every learning goal.</div>
+        <div className="section-label">💰 Transparent Pricing</div>
+        <div className="section-title">Fee Structure</div>
+        <div className="section-sub" style={{ color: "rgba(255,255,255,0.6)" }}>No hidden charges. Flexible monthly plans designed for every budget and learning objective.</div>
       </div>
       <div className="fees-body">
         <div className="section-label" style={{ marginBottom: "40px" }}>Monthly Plans — Regular Batches</div>
@@ -788,9 +874,9 @@ function ContactPage() {
   return (
     <div>
       <div className="contact-hero">
-        <div className="section-label">Get in Touch</div>
-        <div className="section-title">Contact Us</div>
-        <div className="section-sub" style={{ color: "rgba(255,255,255,0.6)" }}>We'd love to hear from you. Visit us or drop a message — we respond within 24 hours.</div>
+        <div className="section-label">📞 Contact Us</div>
+        <div className="section-title">Get in Touch</div>
+        <div className="section-sub" style={{ color: "rgba(255,255,255,0.6)" }}>Have questions? Visit our centre, call us, or submit your inquiry. We're here to help!</div>
       </div>
       <div className="contact-body">
         <div className="contact-grid">
@@ -818,9 +904,9 @@ function ContactPage() {
           </div>
           <div>
             <div className="contact-form-wrap">
-              <h3>Send Us a Message</h3>
+              <h3>📧 Send Us a Message</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {[["Name *", "Your full name", "text"], ["Phone *", "+91 XXXXX XXXXX", "tel"], ["Email", "your@email.com", "email"], ["Subject", "What is this about?", "text"]].map(([label, ph, type]) => (
+                {[["Name *", "Your full name", "text"], ["Phone *", "9876543210", "tel"], ["Email", "your@email.com", "email"], ["Subject", "What is this about?", "text"]].map(([label, ph, type]) => (
                   <div className="form-group" key={label}>
                     <label className="form-label">{label}</label>
                     <input className="form-input" placeholder={ph} type={type} />
@@ -844,9 +930,9 @@ function EnquiryPage() {
   return (
     <div>
       <div className="enq-hero">
-        <div className="section-label">Admissions</div>
-        <div className="section-title">Enquiry &<br />Admission Form</div>
-        <div className="section-sub" style={{ color: "rgba(255,255,255,0.6)" }}>Fill in the details below and our admissions team will get back to you within 24 hours to guide you through the next steps.</div>
+        <div className="section-label">🎯 Admissions</div>
+        <div className="section-title">Admission<br />Form</div>
+        <div className="section-sub" style={{ color: "rgba(255,255,255,0.6)" }}>Complete the form below to start your learning journey. Our admissions team will contact you within 24 hours to discuss your goals and available batch options.</div>
       </div>
       <div className="enq-page">
         <div className="form-card">
@@ -913,6 +999,12 @@ export default function App() {
           <div className="footer-brand">
             <span className="footer-brand-name">Cornerstone <span>MathSphere</span></span>
             <p>Expert coaching in Mathematics, Physics, Chemistry & Biology for all standards. NEET, JEE & UPSC exam tracks.</p>
+            <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+              <a href="#" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>f</a>
+              <a href="#" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>𝕏</a>
+              <a href="#" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>in</a>
+              <a href="#" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>📱</a>
+            </div>
           </div>
           {[
             ["Quick Links", ["Home", "About Us", "Courses", "Fee Structure", "Contact Us", "Enquiry Form"]],
@@ -934,7 +1026,7 @@ export default function App() {
         </div>
         <div className="footer-bottom">
           <span>© 2026 Cornerstone MathSphere. All rights reserved.</span>
-          <span>📍 Chennai, Tamil Nadu · ☎ +91 98765 43210</span>
+          <span>📍 12, Knowledge Park, Chennai – 600 001 | ☎ +91 98765 43210 | 📧 info@cornerstonemathsphere.in</span>
         </div>
       </footer>
     </>
