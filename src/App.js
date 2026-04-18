@@ -1472,10 +1472,10 @@ export default function App() {
             <span className="footer-brand-name">Cornerstone <span>MathSphere</span></span>
             <p>Expert coaching in Mathematics, Physics, Chemistry & Biology for all standards. NEET, JEE & UPSC exam tracks.</p>
             <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
-              <a href="#" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>f</a>
-              <a href="#" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>𝕏</a>
-              <a href="#" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>in</a>
-              <a href="#" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>📱</a>
+              <a href="#!" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>f</a>
+              <a href="#!" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>𝕏</a>
+              <a href="#!" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>in</a>
+              <a href="#!" style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>📱</a>
             </div>
           </div>
           {[
