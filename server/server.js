@@ -42,7 +42,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async (to, subject, htmlContent) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_FROM || 'noreply@cornerstonemathsphere.in',
+      from: process.env.EMAIL_FROM || 'cornerstonemathsphere@gmail.com',
       to,
       subject,
       html: htmlContent,
@@ -128,14 +128,14 @@ const enquiryConfirmationTemplate = (name) => `
         <p>Thank you for your enquiry! We have received your information and our admissions team will contact you within 24 hours to discuss your learning needs.</p>
         <p>If you have any urgent questions, please contact us at:</p>
         <ul>
-          <li>📞 +91 98765 43210</li>
-          <li>📧 admissions@cornerstonemathsphere.in</li>
+          <li>📞 +91 95859 79804</li>
+          <li>📧 cornerstonemathsphere@gmail.com</li>
         </ul>
         <p>Best regards,<br><strong>Cornerstone MathSphere Team</strong></p>
       </div>
       <div class="footer">
         <p>© 2026 Cornerstone MathSphere. All rights reserved.</p>
-        <p>12, Knowledge Park, Chennai – 600 001</p>
+        <p>K.pudur, Madurai-625007</p>
       </div>
     </div>
   </body>
@@ -204,7 +204,7 @@ app.post('/api/submit-enquiry', async (req, res) => {
     }
 
     // Send notification to admin
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@cornerstonemathsphere.in';
+    const adminEmail = process.env.ADMIN_EMAIL || 'cornerstonemathsphere@gmail.com';
     await sendEmail(adminEmail, `New Enquiry: ${name}`, adminNotificationTemplate(enquiry));
 
     // Trigger Analytics
@@ -250,7 +250,7 @@ app.post('/api/submit-contact', async (req, res) => {
     }
 
     // Notify admin
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@cornerstonemathsphere.in';
+    const adminEmail = process.env.ADMIN_EMAIL || 'cornerstonemathsphere@gmail.com';
     await sendEmail(adminEmail, `New Contact Message from ${name}`, `
       <h3>New Message:</h3>
       <p><strong>Name:</strong> ${name}</p>

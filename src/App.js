@@ -714,12 +714,31 @@ function EnquiryFormInner() {
       setLoading(false);
     }
   };
+
+  const submitToWhatsApp = () => {
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    const message = `*New Admission Enquiry - Cornerstone MathSphere*%0A%0A` +
+      `*Student Name:* ${form.name}%0A` +
+      `*Phone:* ${form.phone}%0A` +
+      `*Email:* ${form.email || "N/A"}%0A` +
+      `*Class:* ${form.std || "N/A"}%0A` +
+      `*Subject:* ${form.subject || "N/A"}%0A` +
+      `*Competitive Exam:* ${form.exam || "N/A"}%0A` +
+      `*Preferred Time:* ${form.batchTime || "N/A"}%0A` +
+      `*Message:* ${form.msg || "N/A"}`;
+    
+    window.open(`https://wa.me/919585979804?text=${message}`, '_blank');
+  };
   
   if (submitted) return (
     <div className="form-success">
       <div style={{ fontSize: "3rem", marginBottom: "16px" }}>✅</div>
       <h3>Enquiry Submitted Successfully!</h3>
-      <p>Thank you, <strong>{form.name}</strong>. Our admissions team will contact you within 24 hours.<br />For urgent queries, call <strong>+91 98765 43210</strong> or email <strong>admissions@cornerstonemathsphere.in</strong></p>
+      <p>Thank you, <strong>{form.name}</strong>. Our admissions team will contact you within 24 hours.<br />For urgent queries, call <strong>+91 95859 79804</strong> or email <strong>cornerstonemathsphere@gmail.com</strong></p>
       <button className="btn-gold" style={{ marginTop: "20px" }} onClick={() => window.location.href = "/"}>← Back to Home</button>
     </div>
   );
@@ -789,7 +808,7 @@ function EnquiryFormInner() {
           <textarea className="form-textarea" placeholder="Tell us about your learning goals, current difficulties, or any questions..." value={form.msg} onChange={e => set("msg", e.target.value)} />
         </div>
       </div>
-      <button className="form-submit" onClick={handle} disabled={loading} style={{ opacity: loading ? 0.7 : 1 }}>{loading ? "⏳ Submitting..." : "Submit Enquiry →"}</button>
+      <button className="form-submit" onClick={submitToWhatsApp} style={{ background: "#7c3aed", borderColor: "#7c3aed", width: "100%" }}>Submit</button>
     </div>
   );
 }
@@ -808,7 +827,7 @@ function HomePage({ goTo }) {
         <div className="hero-glow"></div>
         
         <div className="hero-content">
-          <div className="hero-badge">🏆 Est. 2012 · #1 Tuition Centre in Chennai</div>
+          <div className="hero-badge">🏆 Est. 2012 · #1 Tuition Centre in Madurai</div>
           <h1>Unlock Your Academic Potential</h1>
           <div className="hero-tagline">Expert Science & Mathematics Coaching</div>
           <p className="hero-desc">Transform your grades with personalized coaching from experienced faculty. Master boards exams and competitive exams (NEET, JEE, UPSC) with confidence.</p>
@@ -1016,7 +1035,7 @@ function AboutPage() {
         <div style={{ position: "relative", zIndex: 1, maxWidth: "800px" }}>
           <div className="section-label" style={{ color: "var(--gold)" }}>About Us</div>
           <div className="section-title" style={{ color: "var(--white)", fontSize: "clamp(2.5rem, 5vw, 4rem)", marginBottom: "20px" }}>Cornerstone MathSphere</div>
-          <div className="section-sub" style={{ color: "rgba(255,255,255,0.7)", fontSize: "1.1rem", maxWidth: "600px" }}>Leading Science & Mathematics education institution in Chennai with 10+ years of proven excellence and 1200+ successful students.</div>
+          <div className="section-sub" style={{ color: "rgba(255,255,255,0.7)", fontSize: "1.1rem", maxWidth: "600px" }}>Leading Science & Mathematics education institution in Madurai with 10+ years of proven excellence and 1200+ successful students.</div>
         </div>
       </div>
 
@@ -1318,6 +1337,46 @@ function FeesPage({ goTo }) {
 }
 
 function ContactPage() {
+  const [form, setForm] = useState({ name: "", phone: "", email: "", subject: "", message: "" });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const submitToWhatsApp = () => {
+    if (!form.name || !form.message) {
+      alert("Please fill name and message");
+      return;
+    }
+    const message = `*New Contact Message - Cornerstone MathSphere*%0A%0A` +
+      `*Name:* ${form.name}%0A` +
+      `*Phone:* ${form.phone || "N/A"}%0A` +
+      `*Email:* ${form.email || "N/A"}%0A` +
+      `*Subject:* ${form.subject || "N/A"}%0A` +
+      `*Message:* ${form.message}`;
+    
+    window.open(`https://wa.me/919585979804?text=${message}`, '_blank');
+  };
+
+  const handleContactSubmit = async () => {
+    if (!form.name || !form.message) {
+      alert("Please fill name and message");
+      return;
+    }
+    try {
+      const response = await fetch('/api/submit-contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      if (response.ok) {
+        alert("Message sent successfully!");
+        setForm({ name: "", phone: "", email: "", subject: "", message: "" });
+      } else {
+        alert("Failed to send message.");
+      }
+    } catch (err) {
+      alert("Network error.");
+    }
+  };
+
   return (
     <div>
       <div className="contact-hero">
@@ -1331,9 +1390,9 @@ function ContactPage() {
             <div className="section-label" style={{ marginBottom: "20px" }}>Contact Information</div>
             <div className="contact-info-cards">
               {[
-                ["📍", "Address", "12, Knowledge Park, Near Central Bus Stand\nChennai – 600 001, Tamil Nadu"],
-                ["📞", "Phone", "+91 98765 43210\n+91 98765 43211 (Admin)"],
-                ["📧", "Email", "info@cornerstonemathsphere.in\nadmissions@cornerstonemathsphere.in"],
+                ["📍", "Address", "K.pudur, Madurai-625007"],
+                ["📞", "Phone", "+91 95859 79804"],
+                ["📧", "Email", "cornerstonemathsphere@gmail.com"],
                 ["🕐", "Centre Hours", "Mon – Sat: 7:00 AM – 9:00 PM\nSunday: 9:00 AM – 1:00 PM"],
               ].map(([icon, label, val]) => (
                 <div className="cinfo-card" key={label}>
@@ -1345,25 +1404,46 @@ function ContactPage() {
                 </div>
               ))}
             </div>
-            <div className="map-block" style={{ marginTop: "20px" }}>
-              📍 Google Maps — Cornerstone MathSphere, Chennai
+            <div className="map-view" style={{ marginTop: "20px", borderRadius: "12px", overflow: "hidden", border: "1px solid var(--mist)", height: "300px", background: "var(--light)" }}>
+              <iframe 
+                src="https://maps.google.com/maps?q=9.9543044,78.1507177&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0 }} 
+                allowFullScreen="" 
+                loading="lazy"
+                title="Cornerstone MathSphere Location"
+              ></iframe>
             </div>
+            <a href="https://maps.app.goo.gl/ZcnxS8UPVPRqrDmb8" target="_blank" rel="noopener noreferrer" style={{ marginTop: "12px", display: "block", textDecoration: "none", color: "var(--gold)", fontSize: "0.85rem", fontWeight: 700 }}>
+              📍 Open in Google Maps App →
+            </a>
           </div>
           <div>
             <div className="contact-form-wrap">
               <h3>📧 Send Us a Message</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {[["Name *", "Your full name", "text"], ["Phone *", "9876543210", "tel"], ["Email", "your@email.com", "email"], ["Subject", "What is this about?", "text"]].map(([label, ph, type]) => (
-                  <div className="form-group" key={label}>
-                    <label className="form-label">{label}</label>
-                    <input className="form-input" placeholder={ph} type={type} />
-                  </div>
-                ))}
+                <div className="form-group">
+                  <label className="form-label">Name *</label>
+                  <input className="form-input" placeholder="Your full name" value={form.name} onChange={e => set("name", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Phone *</label>
+                  <input className="form-input" placeholder="9876543210" value={form.phone} onChange={e => set("phone", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input className="form-input" placeholder="your@email.com" type="email" value={form.email} onChange={e => set("email", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Subject</label>
+                  <input className="form-input" placeholder="What is this about?" value={form.subject} onChange={e => set("subject", e.target.value)} />
+                </div>
                 <div className="form-group">
                   <label className="form-label">Message</label>
-                  <textarea className="form-textarea" placeholder="Your message..." style={{ minHeight: "110px" }} />
+                  <textarea className="form-textarea" placeholder="Your message..." style={{ minHeight: "110px" }} value={form.message} onChange={e => set("message", e.target.value)} />
                 </div>
-                <button className="form-submit">Send Message →</button>
+                <button className="form-submit" onClick={submitToWhatsApp} style={{ background: "#7c3aed", borderColor: "#7c3aed", width: "100%" }}>Submit</button>
               </div>
             </div>
           </div>
@@ -1498,7 +1578,7 @@ export default function App() {
         </div>
         <div className="footer-bottom">
           <span>© 2026 Cornerstone MathSphere. All rights reserved.</span>
-          <span>📍 12, Knowledge Park, Chennai – 600 001 | ☎ +91 98765 43210 | 📧 info@cornerstonemathsphere.in</span>
+          <span><a href="https://maps.app.goo.gl/ZcnxS8UPVPRqrDmb8" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>📍 K.pudur, Madurai-625007</a> | ☎ +91 95859 79804 | 📧 cornerstonemathsphere@gmail.com</span>
         </div>
       </footer>
     </>
